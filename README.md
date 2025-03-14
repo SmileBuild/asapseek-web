@@ -1,4 +1,4 @@
-# BubbleChat
+# asapseek-web
 
 A modern web application that provides a unified chat interface for various AI APIs, built with Vue.js and Tailwind CSS.
 
