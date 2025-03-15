@@ -1,7 +1,7 @@
 <template>
   <div class="flex min-h-screen bg-background">
-    <Sidebar 
-      :sessions="sessions"
+    <Sidebar
+      :sessions="sortedSessions"
       :activeSessionId="activeSessionId"
       :language="language"
       @new-chat="createNewChat"
@@ -11,8 +11,9 @@
       @update-settings="handleSettingsSave"
       @update-api="handleAPIChange"
       @remove-session="removeSession"
+      @toggle-pin="togglePin"
     />
-    <ChatContainer 
+    <ChatContainer
       :messages="currentMessages"
       :language="language"
       :isLoading="isLoading"
@@ -26,35 +27,34 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, inject } from 'vue';
-import Sidebar from './layout/Sidebar.vue';
-import ChatContainer from './layout/ChatContainer.vue';
-
+import { ref, computed, onMounted, watch, inject } from "vue";
+import Sidebar from "./layout/Sidebar.vue";
+import ChatContainer from "./layout/ChatContainer.vue";
 
 // API State
 const apiSettings = ref({});
 const currentAPI = ref({
-  provider: 'deepseek',
-  model: 'deepseek-chat'
+  provider: "deepseek",
+  model: "deepseek-chat",
 });
 
 // State
-const STORAGE_KEY = 'bubblechat-sessions';
+const STORAGE_KEY = "bubblechat-sessions";
 const sessions = ref([]);
-const activeSessionId = ref('1');
+const activeSessionId = ref("1");
 const isLoading = ref(false);
 
 const props = defineProps({
   language: {
     type: String,
-    required: true
-  }
+    required: true,
+  },
 });
 
-const emit = defineEmits(['show-about', 'error']);
+const emit = defineEmits(["show-about", "error"]);
 
 // Get settings update handler from parent
-const onSettingsUpdate = inject('onSettingsUpdate');
+const onSettingsUpdate = inject("onSettingsUpdate");
 
 // Storage methods
 const loadSessions = () => {
@@ -62,52 +62,75 @@ const loadSessions = () => {
     const savedSessions = localStorage.getItem(STORAGE_KEY);
     return savedSessions ? JSON.parse(savedSessions) : [];
   } catch (error) {
-    console.error('Error loading sessions:', error);
+    console.error("Error loading sessions:", error);
     return [];
   }
+};
+
+// Computed property for sorted sessions
+const sortedSessions = computed(() => {
+  return [...sessions.value].sort((a, b) => {
+    if (a.isPinned === b.isPinned) {
+      return new Date(b.timestamp) - new Date(a.timestamp);
+    }
+    return a.isPinned ? -1 : 1;
+  });
+});
+
+const togglePin = (sessionId) => {
+  const session = sessions.value.find((s) => s.id === sessionId);
+  if (session) {
+    updateSession({
+      id: sessionId,
+      isPinned: !session.isPinned,
+    });
+  }
+  console.log(session, sessionId, sessions.value);
 };
 
 const saveSessions = (newSessions) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newSessions));
   } catch (error) {
-    console.error('Error saving sessions:', error);
+    console.error("Error saving sessions:", error);
   }
 };
 
 const updateStorageSession = (currentSessions, sessionId, updates) => {
   try {
-    const sessionIndex = currentSessions.findIndex(s => s.id === sessionId);
+    const sessionIndex = currentSessions.findIndex((s) => s.id === sessionId);
     if (sessionIndex === -1) return null;
 
     const updatedSessions = [...currentSessions];
     updatedSessions[sessionIndex] = {
       ...updatedSessions[sessionIndex],
-      ...updates
+      ...updates,
     };
 
     saveSessions(updatedSessions);
     return updatedSessions;
   } catch (error) {
-    console.error('Error updating session:', error);
+    console.error("Error updating session:", error);
     return null;
   }
 };
 
 const deleteStorageSession = (currentSessions, sessionId) => {
   try {
-    const updatedSessions = currentSessions.filter(session => session.id !== sessionId);
+    const updatedSessions = currentSessions.filter(
+      (session) => session.id !== sessionId
+    );
     saveSessions(updatedSessions);
     return updatedSessions;
   } catch (error) {
-    console.error('Error deleting session:', error);
+    console.error("Error deleting session:", error);
     return currentSessions;
   }
 };
 
 // Computed
 const currentMessages = computed(() => {
-  const session = sessions.value.find(s => s.id === activeSessionId.value);
+  const session = sessions.value.find((s) => s.id === activeSessionId.value);
   return session ? session.messages : [];
 });
 
@@ -123,7 +146,7 @@ onMounted(() => {
   }
 
   // Load saved API settings
-  const savedApiSettings = localStorage.getItem('api-settings');
+  const savedApiSettings = localStorage.getItem("api-settings");
   if (savedApiSettings) {
     const parsedSettings = JSON.parse(savedApiSettings);
     // Initialize apiSettings with the current provider's settings if they exist
@@ -132,17 +155,22 @@ onMounted(() => {
 });
 
 // Watch for sessions changes
-watch(sessions, (newSessions) => {
-  saveSessions(newSessions);
-}, { deep: true });
+watch(
+  sessions,
+  (newSessions) => {
+    saveSessions(newSessions);
+  },
+  { deep: true }
+);
 
 // Methods
 const createNewChat = () => {
   const newSession = {
     id: Date.now().toString(),
-    title: 'New Chat',
+    title: "New Chat",
     timestamp: new Date(),
-    messages: []
+    messages: [],
+    isPinned: false,
   };
   sessions.value.unshift(newSession);
   activeSessionId.value = newSession.id;
@@ -150,8 +178,8 @@ const createNewChat = () => {
 
 const updateSession = (update) => {
   const updatedSessions = updateStorageSession(sessions.value, update.id, {
-    title: update.title,
-    timestamp: new Date()
+    ...("title" in update ? { title: update.title } : {}),
+    ...("isPinned" in update ? { isPinned: update.isPinned } : {}),
   });
   if (updatedSessions) {
     sessions.value = updatedSessions;
@@ -174,7 +202,7 @@ const handleSettingsSave = (settings) => {
   if (settings.commonSettings && onSettingsUpdate) {
     onSettingsUpdate(settings);
   }
-  
+
   // Handle API settings update
   if (settings.apiSettings) {
     apiSettings.value = settings.apiSettings[currentAPI.value.provider] || {};
@@ -184,43 +212,47 @@ const handleSettingsSave = (settings) => {
 const handleAPIChange = (selection) => {
   currentAPI.value = selection;
   // Update the active API settings based on the new provider
-  apiSettings.value = localStorage.getItem('api-settings') ? 
-    JSON.parse(localStorage.getItem('api-settings'))[selection.provider] || {} :
-    {};
+  apiSettings.value = localStorage.getItem("api-settings")
+    ? JSON.parse(localStorage.getItem("api-settings"))[selection.provider] || {}
+    : {};
 };
 
 const addMessage = (sessionId, message) => {
-  const sessionIndex = sessions.value.findIndex(s => s.id === sessionId);
+  const sessionIndex = sessions.value.findIndex((s) => s.id === sessionId);
   if (sessionIndex === -1) return;
 
   const newMessage = {
     id: Date.now().toString(),
     ...message,
-    timestamp: new Date()
+    timestamp: new Date(),
   };
 
   sessions.value[sessionIndex].messages.push(newMessage);
 
   // Update session title if it's the first message
-  if (sessions.value[sessionIndex].messages.length === 1 && message.sender === 'user') {
-    const newTitle = message.content.slice(0, 30) + (message.content.length > 30 ? '...' : '');
+  if (
+    sessions.value[sessionIndex].messages.length === 1 &&
+    message.sender === "user"
+  ) {
+    const newTitle =
+      message.content.slice(0, 30) + (message.content.length > 30 ? "..." : "");
     sessions.value = updateStorageSession(sessions.value, sessionId, {
       title: newTitle,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }
 };
 
 const handleSendMessage = (message, response) => {
-  console.log('handlesendmsg:',message);
-  console.log('handlesendmsg:',response);
+  console.log("handlesendmsg:", message);
+  console.log("handlesendmsg:", response);
   if (!activeSessionId.value) return;
 
   if (!response) {
     // Initial user message
     addMessage(activeSessionId.value, {
       content: message,
-      sender: 'user'
+      sender: "user",
     });
     isLoading.value = true;
   } else {
@@ -232,10 +264,10 @@ const handleSendMessage = (message, response) => {
 
 const handleError = (errorMessage) => {
   isLoading.value = false;
-  console.log('errormsg',errorMessage)
+  console.log("errormsg", errorMessage);
   addMessage(activeSessionId.value, {
     content: `Error: ${errorMessage}`,
-    sender: 'error'
+    sender: "error",
   });
 };
 </script>

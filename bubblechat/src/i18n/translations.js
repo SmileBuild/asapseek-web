@@ -18,7 +18,9 @@ export const translations = {
       save: 'Save',
       cancel: 'Cancel',
       rename: 'Rename',
-      delete: 'Delete'
+      delete: 'Delete',
+      pin: 'Pin to top',
+      unpin: 'Unpin from top'
     },
     settings: {
       commonSettings: 'Common Settings',
@@ -61,7 +63,9 @@ export const translations = {
       save: '保存',
       cancel: '取消',
       rename: '重命名',
-      delete: '删除'
+      delete: '删除',
+      pin: '置顶对话',
+      unpin: '取消置顶'
     },
     settings: {
       commonSettings: '通用设置',
