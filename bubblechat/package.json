@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroicons/vue": "^2.2.0",
+    "daisyui": "^5.0.4",
     "dayjs": "^1.11.13",
     "dompurify": "^3.0.8",
     "highlight.js": "^11.9.0",
