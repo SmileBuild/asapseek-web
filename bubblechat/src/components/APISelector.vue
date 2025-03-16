@@ -302,13 +302,13 @@ const deleteModel = (model) => {
 };
 const clickSaveBtn = () => {
   if (!modelForm.value.id) {
-    return
+    return;
   }
   if (!modelForm.value.name) {
-    return
+    return;
   }
   if (!modelForm.value.description) {
-    return
+    return;
   }
   dialogFormVisible.value = false;
   selectedModel.value = null;
@@ -496,16 +496,16 @@ onMounted(() => {
       }
     });
   }
-
   // Validate and set provider
   const validProvider = providers.find(
-    (p) => p.id === props.currentProvider.id
+    (p) => p.id === props.currentProvider.provider
   );
+  console.log("validProvider===", props.currentProvider);
   if (validProvider) {
     selectedProvider.value = validProvider;
     // Validate and set model for the selected provider
-    if (validProvider.models) {
-      const validModel = validProvider.models.find(
+    if (validProvider.value.models) {
+      const validModel = validProvider.value.models.find(
         (m) => m.id === props.currentModel.id
       );
       if (validModel) {
@@ -513,15 +513,16 @@ onMounted(() => {
       }
     }
   }
+  console.log("selectedModel===", selectedModel.value);
 });
 
 const addCustomModel = () => {
-  isModify.value = false
+  isModify.value = false;
   modelForm.value = {
     id: "",
     name: "",
     description: "",
-  }
+  };
   dialogFormVisible.value = true;
 };
 

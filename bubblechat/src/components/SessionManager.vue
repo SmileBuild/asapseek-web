@@ -34,8 +34,12 @@ import ChatContainer from "./layout/ChatContainer.vue";
 // API State
 const apiSettings = ref({});
 const currentAPI = ref({
-  provider: "deepseek",
-  model: "deepseek-chat",
+  provider: localStorage.getItem("current-api")
+    ? JSON.parse(localStorage.getItem("current-api")).provider
+    : "deepseek",
+  model: localStorage.getItem("current-api")
+    ? JSON.parse(localStorage.getItem("current-api")).model
+    : "deepseek-chat",
 });
 
 // State
