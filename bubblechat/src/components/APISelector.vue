@@ -1,9 +1,14 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div class="bg-surface dark:bg-surface-dark rounded-lg p-6 w-[800px] max-w-full max-h-[90vh] flex flex-col">
+  <div
+    v-if="isOpen"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+  >
+    <div
+      class="bg-surface dark:bg-surface-dark rounded-lg p-6 w-[800px] max-w-full max-h-[90vh] flex flex-col"
+    >
       <!-- Header -->
       <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl font-semibold">Select API Provider & Model</h2>
+        <h2 class="text-xl font-semibold">{{ t("apiSelector.title") }}</h2>
         <button @click="close" class="text-gray-400 hover:text-white">
           <span class="material-icons">close</span>
         </button>
@@ -12,10 +17,31 @@
       <!-- Content -->
       <div class="flex flex-1 overflow-hidden">
         <!-- Left side - Provider Selection -->
-        <div class="w-64 border-r border-gray-200 dark:border-gray-700 pr-4 overflow-y-auto">
-          <h3 class="text-lg font-medium mb-4">API Provider</h3>
+        <div
+          class="w-64 border-r border-gray-200 dark:border-gray-700 pr-4 overflow-y-auto"
+        >
+          <h3 class="text-lg font-medium mb-4">
+            {{ t("apiSelector.providerSection") }}
+          </h3>
           <div class="space-y-2">
-            <button
+            <div class="api-box">
+              <div
+                class="item"
+                v-for="provider in providers"
+                :key="provider.id"
+                @click="selectProvider(provider)"
+              >
+                <div style="width: 10px; flex-shrink: 0">
+                  <div
+                    v-show="selectedProvider.id == provider.id"
+                    class="icon"
+                  ></div>
+                </div>
+                <div style="padding-left: 5px">{{ provider.name }}</div>
+              </div>
+            </div>
+
+            <!-- <button
               v-for="provider in providers"
               :key="provider.id"
               @click="selectProvider(provider)"
@@ -27,8 +53,7 @@
               ]"
             >
               <div class="font-medium">{{ provider.name }}</div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">{{ provider.description }}</div>
-            </button>
+            </button> -->
           </div>
         </div>
 
@@ -36,54 +61,44 @@
         <div class="flex-1 pl-6 overflow-y-auto">
           <!-- Model Selection -->
           <div v-if="selectedProvider">
-            <h3 class="text-lg font-medium mb-4">Model Selection</h3>
-            <div class="grid grid-cols-2 gap-4 mb-6">
-              <button
-                v-for="model in selectedProvider.models"
-                :key="model.id"
-                @click="selectModel(model)"
-                :class="[
-                  'p-4 rounded-lg border text-left transition-colors',
-                  selectedModel?.id === model.id
-                    ? 'bg-primary border-primary'
-                    : 'border-gray-700 hover:border-primary/50'
-                ]"
-              >
-                <div class="font-medium">{{ model.name }}</div>
-                <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ model.description }}</div>
-              </button>
-            </div>
-
-            <!-- API Documentation Link -->
-            <div class="mb-6">
-              <a 
-                :href="selectedProvider.docUrl"
-                target="_blank"
-                rel="noopener"
-                class="text-primary hover:text-primary/90 dark:text-primary/90 dark:hover:text-primary flex items-center gap-2 text-sm"
-              >
-                <span class="material-icons text-sm">open_in_new</span>
-                View API Documentation
-              </a>
-            </div>
-
             <!-- API Settings -->
             <div class="space-y-4">
               <!-- API Key -->
               <div class="space-y-1">
-                <label class="block text-sm font-medium">API Key</label>
-                <input 
+                <div style="display: flex">
+                  <label class="block text-sm font-medium">{{
+                    t("apiSelector.apiKey")
+                  }}</label>
+                  <div class="mb-6">
+                    <a
+                      :href="selectedProvider.docUrl"
+                      target="_blank"
+                      rel="noopener"
+                      class="text-primary hover:text-primary/90 dark:text-primary/90 dark:hover:text-primary flex items-center gap-2 text-sm"
+                    >
+                      <span
+                        class="material-icons text-sm"
+                        style="padding-left: 5px"
+                        >open_in_new</span
+                      >
+                      {{ t("apiSelector.viewDocs") }}
+                    </a>
+                  </div>
+                </div>
+                <input
                   type="password"
                   v-model="apiSettings[selectedProvider.id].apiKey"
-                  placeholder="Enter API Key"
+                  :placeholder="t('apiSelector.apiKeyPlaceholder')"
                   class="w-full bg-surface-light dark:bg-surface-light-dark rounded px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 focus:border-primary focus:outline-none"
                 />
               </div>
 
               <!-- Base URL -->
               <div class="space-y-1">
-                <label class="block text-sm font-medium">Base URL</label>
-                <input 
+                <label class="block text-sm font-medium">{{
+                  t("apiSelector.baseUrl")
+                }}</label>
+                <input
                   type="text"
                   v-model="apiSettings[selectedProvider.id].baseUrl"
                   :placeholder="selectedProvider.defaultBaseUrl"
@@ -91,7 +106,6 @@
                 />
               </div>
             </div>
-
             <!-- Test Connection Button -->
             <div class="mt-6">
               <button
@@ -100,23 +114,104 @@
                 :disabled="testingConnection || !canTestConnection"
                 class="w-full px-4 py-2 text-sm bg-surface-light dark:bg-surface-light-dark hover:bg-surface-light/90 dark:hover:bg-surface-light-dark/90 rounded mb-4 disabled:opacity-50 disabled:cursor-not-allowed text-gray-800 dark:text-gray-100"
               >
-                <span v-if="testingConnection">Testing...</span>
-                <span v-else>Test Connection</span>
+                <span v-if="testingConnection">{{
+                  t("apiSelector.testing")
+                }}</span>
+                <span v-else>{{ t("apiSelector.testConnection") }}</span>
               </button>
+            </div>
+            <!-- 模型选择 -->
+            <div class="model-box">
+              <h3 class="text-lg font-medium mb-4">
+                {{ t("apiSelector.modelSection") }}
+              </h3>
+              <template v-if="selectedProvider.name == 'Volcengine'">
+                <div
+                  v-for="model in selectedProvider.models"
+                  :key="model.id"
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: start;
+                  "
+                  @click.stop="selectModel(model)"
+                >
+                  <div style="display: flex; align-items: center">
+                    <div style="width: 10px; flex-shrink: 0">
+                      <div
+                        style="
+                          width: 5px;
+                          height: 20px;
+                          background: green;
+                          border-radius: 3px;
+                        "
+                        v-show="selectedModel.id == model.id"
+                      ></div>
+                    </div>
+                    <div
+                      class="font-medium"
+                      style="margin: 5px 0; padding: 5px 0"
+                    >
+                      {{ model.name }}
+                    </div>
+                  </div>
+                  <div class="editor">
+                    <div @click.stop="editorModel(model)">编辑模型</div>
+                    <div
+                      @click.stop="deleteModel(model)"
+                      style="margin-left: 10px; color: red"
+                    >
+                      删除模型
+                    </div>
+                  </div>
+                </div>
+                <div style="padding-top: 20px">自定义模型</div>
+                <el-button
+                  class="add-model"
+                  type="primary"
+                  @click="addCustomModel"
+                  >添加模型</el-button
+                >
+              </template>
+              <template v-else>
+                <div
+                  v-for="model in selectedProvider.models"
+                  :key="model.id"
+                  style="display: flex; align-items: center"
+                  @click="selectModel(model)"
+                >
+                  <div style="width: 10px; flex-shrink: 0">
+                    <div
+                      style="
+                        width: 5px;
+                        height: 20px;
+                        background: green;
+                        border-radius: 3px;
+                      "
+                      v-show="selectedModel.id == model.id"
+                    ></div>
+                  </div>
+                  <div class="font-medium" style="margin: 5px 0">
+                    {{ model.name }}
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Footer -->
-      <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <button 
+      <div
+        class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700"
+      >
+        <button
           @click="close"
           class="px-4 py-2 text-sm rounded text-gray-800 dark:text-gray-200 hover:bg-surface-light dark:hover:bg-surface-light-dark"
         >
           Cancel
         </button>
-        <button 
+        <button
           @click="save"
           :disabled="!canSave"
           class="px-4 py-2 text-sm bg-primary hover:bg-primary/90 rounded disabled:opacity-50 disabled:cursor-not-allowed"
@@ -125,109 +220,241 @@
         </button>
       </div>
     </div>
+    <!-- Model Form Modal -->
+    <el-dialog
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      v-model="dialogFormVisible"
+      title="添加模型"
+      width="500"
+    >
+      <el-form :model="modelForm">
+        <el-form-item label="模型ID">
+          <el-input
+            v-model="modelForm.id"
+            autocomplete="off"
+            placeholder="请输入火山引擎的模型ID"
+            :disabled="isModify"
+          />
+        </el-form-item>
+        <el-form-item label="模型名称">
+          <el-input
+            v-model="modelForm.name"
+            autocomplete="off"
+            placeholder="请输入模型显示名称"
+          />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input
+            type="textarea"
+            v-model="modelForm.description"
+            autocomplete="off"
+            placeholder="请输入模型描述"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogFormVisible = false">取消</el-button>
+          <el-button type="primary" @click="clickSaveBtn"> 保存 </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, reactive, toRaw } from "vue";
+import { useTranslations } from "../i18n/translations";
+
+const isModify = ref(false);
+const dialogFormVisible = ref(false);
+const modelForm = ref({
+  id: "",
+  name: "",
+  description: "",
+});
+const editorModel = (model) => {
+  isModify.value = true;
+  modelForm.value = model;
+  console.log("selectedModel===", model);
+
+  console.log(modelForm.value);
+  dialogFormVisible.value = true;
+};
+const deleteModel = (model) => {
+  const index = selectedProvider.value.models.findIndex(
+    (item) => item.id === model.id
+  );
+  if (index !== -1) {
+    selectedProvider.value.models.splice(index, 1);
+    console.log("selectedProvider===", selectedProvider);
+    if (selectedProvider.value.models) {
+      selectedModel.value = selectedProvider.value.models[0];
+    }
+    const currentIndex = providers.findIndex(
+      (p) => p.id === selectedProvider.value.id
+    );
+    providers[currentIndex].models = toRaw(selectedProvider.value.models);
+    console.log("providers====", providers);
+    localStorage.setItem("providers", JSON.stringify(providers));
+  }
+};
+const clickSaveBtn = () => {
+  if (!modelForm.value.id) {
+    return
+  }
+  if (!modelForm.value.name) {
+    return
+  }
+  if (!modelForm.value.description) {
+    return
+  }
+  dialogFormVisible.value = false;
+  selectedModel.value = null;
+
+  if (isModify.value) {
+    selectedModel.value = modelForm.value;
+    console.log(1);
+  } else {
+    console.log(2);
+    isModify.value = false;
+    selectedProvider.value.models.unshift(modelForm.value);
+    selectedModel.value = modelForm.value;
+    modelForm.value = {
+      id: "",
+      name: "",
+      description: "",
+    };
+  }
+  const currentIndex = providers.findIndex(
+    (p) => p.id === selectedProvider.value.id
+  );
+  if (currentIndex !== -1) {
+    providers[currentIndex].models = toRaw(selectedProvider.value.models);
+    localStorage.setItem("providers", JSON.stringify(providers));
+  }
+  modelForm.value = {
+    id: "",
+    name: "",
+    description: "",
+  };
+  isModify.value = false;
+};
+
+const t = computed(() => {
+  const result = useTranslations(props.language);
+  // 确保返回的是函数，无论 useTranslations 返回什么
+  return typeof result === "function"
+    ? result
+    : result && typeof result.t === "function"
+    ? result.t
+    : (key) => key;
+});
 
 const props = defineProps({
   isOpen: {
     type: Boolean,
-    default: false
+    default: false,
   },
   currentProvider: {
     type: String,
-    default: ''
+    default: "",
   },
   currentModel: {
     type: String,
-    default: ''
-  }
+    default: "",
+  },
+  language: {
+    type: String,
+    required: true,
+  },
 });
 
-const emit = defineEmits(['close', 'save']);
+const emit = defineEmits(["close", "save"]);
+const showingModelModal = ref(false);
 
-const providers = [
+let providers = [
   {
-    id: 'deepseek',
-    name: 'DeepSeek',
-    icon: 'smart_toy',
-    description: 'Advanced AI model for chat and reasoning',
-    docUrl: 'https://platform.deepseek.com/docs',
-    defaultBaseUrl: 'https://api.deepseek.com/chat/completions/',
+    id: "deepseek",
+    name: "DeepSeek",
+    icon: "smart_toy",
+    description: "Advanced AI model for chat and reasoning",
+    docUrl: "https://platform.deepseek.com/docs",
+    defaultBaseUrl: "https://api.deepseek.com/chat/completions/",
     models: [
       {
-        id: 'deepseek-chat',
-        name: 'DeepSeek Chat',
-        description: 'General purpose chat model'
+        id: "deepseek-chat",
+        name: "DeepSeek Chat",
+        description: "General purpose chat model",
       },
       {
-        id: 'deepseek-reasoner',
-        name: 'DeepSeek Reasoner',
-        description: 'Advanced reasoning capabilities'
-      }
-    ]
+        id: "deepseek-reasoner",
+        name: "DeepSeek Reasoner",
+        description: "Advanced reasoning capabilities",
+      },
+    ],
   },
   {
-    id: 'volcengine',
-    name: 'Volcengine',
-    icon: 'smart_toy',
-    description: 'Volcengine AI services with DeepSeek models',
-    docUrl: 'https://console.volcengine.com/ark/region:ark+cn-beijing/endpoint',
-    defaultBaseUrl: '/api/v3/chat/completions',
+    id: "volcengine",
+    name: "Volcengine",
+    icon: "smart_toy",
+    description: "Volcengine AI services with DeepSeek models",
+    docUrl: "https://console.volcengine.com/ark/region:ark+cn-beijing/endpoint",
+    defaultBaseUrl: "/api/v3/chat/completions",
     models: [
-      {
-        id: 'ep-20250222222622-rccqb',
-        name: 'DeepSeek V3',
-        description: 'Advanced language model released on 2024/12/26'
-      },
-      {
-        id: 'ep-20250222222746-956z2',
-        name: 'DeepSeek R1',
-        description: 'Latest reasoning model released on 2025/01/20'
-      }
-    ]
+      // {
+      //   id: "ep-20250222222622-rccqb",
+      //   name: "DeepSeek V3",
+      //   description: "Advanced language model released on 2024/12/26",
+      // },
+      // {
+      //   id: "ep-20250222222746-956z2",
+      //   name: "DeepSeek R1",
+      //   description: "Latest reasoning model released on 2025/01/20",
+      // },
+    ],
   },
   {
-    id: 'siliconflow',
-    name: 'Siliconflow',
-    icon: 'smart_toy',
-    defaultBaseUrl: 'https://api.siliconflow.com/v1/chat/completions',
-    description: 'Deepseek API services via Siliconflow',
+    id: "siliconflow",
+    name: "Siliconflow",
+    icon: "smart_toy",
+    defaultBaseUrl: "https://api.siliconflow.com/v1/chat/completions",
+    description: "Deepseek API services via Siliconflow",
     models: [
       {
-        id: 'deepseek-ai/DeepSeek-V3',
-        name: 'DeepSeek V3',
-        description: 'Latest version of DeepSeek model'
+        id: "deepseek-ai/DeepSeek-V3",
+        name: "DeepSeek V3",
+        description: "Latest version of DeepSeek model",
       },
       {
-        id: 'deepseek-ai/DeepSeek-R1',
-        name: 'DeepSeek R1',
-        description: 'Advanced reasoning model'
-      }
-    ]
+        id: "deepseek-ai/DeepSeek-R1",
+        name: "DeepSeek R1",
+        description: "Advanced reasoning model",
+      },
+    ],
   },
   {
-    id: 'aliyun',
-    name: 'Aliyun',
-    icon: 'smart_toy',
-    description: 'Aliyun AI services with DeepSeek models',
-    docUrl: 'https://help.aliyun.com/document_detail/613695.html',
-    defaultBaseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+    id: "aliyun",
+    name: "Aliyun",
+    icon: "smart_toy",
+    description: "Aliyun AI services with DeepSeek models",
+    docUrl: "https://help.aliyun.com/document_detail/613695.html",
+    defaultBaseUrl:
+      "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
     models: [
       {
-        id: 'deepseek-v3',
-        name: 'deepseek-v3',
-        description: 'Advanced language model for general purpose tasks'
+        id: "deepseek-v3",
+        name: "deepseek-v3",
+        description: "Advanced language model for general purpose tasks",
       },
       {
-        id: 'deepseek-r1',
-        name: 'deepseek-r1',
-        description: 'Specialized model for reasoning tasks'
-      }
-    ]
-  }
+        id: "deepseek-r1",
+        name: "deepseek-r1",
+        description: "Specialized model for reasoning tasks",
+      },
+    ],
+  },
 ];
 
 // API Settings state
@@ -235,11 +462,11 @@ const apiSettings = ref({});
 const testingConnection = ref(false);
 
 // Initialize apiSettings for each provider
-providers.forEach(provider => {
+providers.forEach((provider) => {
   if (!apiSettings.value[provider.id]) {
     apiSettings.value[provider.id] = {
-      apiKey: '',
-      baseUrl: provider.defaultBaseUrl
+      apiKey: "",
+      baseUrl: provider.defaultBaseUrl,
     };
   }
 });
@@ -249,32 +476,54 @@ const selectedModel = ref(providers[0].models[0]);
 
 // Load saved settings and initialize selected provider/model on mount
 onMounted(() => {
+  let localProviders = localStorage.getItem("providers");
+  if (localProviders) {
+    providers = JSON.parse(localProviders);
+  } else {
+    localStorage.setItem("providers", JSON.stringify(providers));
+  }
   // Load API settings
-  const savedSettings = localStorage.getItem('api-settings');
+  const savedSettings = localStorage.getItem("api-settings");
+  console.log("savedSettings===", savedSettings);
   if (savedSettings) {
     const parsed = JSON.parse(savedSettings);
-    Object.keys(parsed).forEach(providerId => {
+    Object.keys(parsed).forEach((providerId) => {
       if (apiSettings.value[providerId]) {
         apiSettings.value[providerId] = {
           ...apiSettings.value[providerId],
-          ...parsed[providerId]
+          ...parsed[providerId],
         };
       }
     });
   }
 
   // Validate and set provider
-  const validProvider = providers.find(p => p.id === props.currentProvider);
+  const validProvider = providers.find(
+    (p) => p.id === props.currentProvider.id
+  );
   if (validProvider) {
     selectedProvider.value = validProvider;
-    
     // Validate and set model for the selected provider
-    const validModel = validProvider.models.find(m => m.id === props.currentModel);
-    if (validModel) {
-      selectedModel.value = validModel;
+    if (validProvider.models) {
+      const validModel = validProvider.models.find(
+        (m) => m.id === props.currentModel.id
+      );
+      if (validModel) {
+        selectedModel.value = validModel;
+      }
     }
   }
 });
+
+const addCustomModel = () => {
+  isModify.value = false
+  modelForm.value = {
+    id: "",
+    name: "",
+    description: "",
+  }
+  dialogFormVisible.value = true;
+};
 
 const canTestConnection = computed(() => {
   if (!selectedProvider.value) return false;
@@ -302,34 +551,34 @@ const handleConnectionTest = async () => {
 
   const settings = apiSettings.value[selectedProvider.value.id];
   testingConnection.value = true;
-  
+
   try {
     const response = await fetch(settings.baseUrl, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${settings.apiKey}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${settings.apiKey}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: selectedModel.value.id,
         messages: [
-          {"role": "system", "content": "You are a helpful assistant."},
-          {"role": "user", "content": "Hello!"}
+          { role: "system", content: "You are a helpful assistant." },
+          { role: "user", content: "Hello!" },
         ],
-        stream: false
-      })
+        stream: false,
+      }),
     });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-  
+
     const data = await response.json();
     if (!data.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response format');
+      throw new Error("Invalid response format");
     }
 
-    alert('Connection successful!');
+    alert("Connection successful!");
   } catch (error) {
     alert(`Error testing connection: ${error.message}`);
   } finally {
@@ -339,23 +588,46 @@ const handleConnectionTest = async () => {
 
 const save = () => {
   if (!canSave.value) return;
-  
+  console.log(apiSettings.value);
   // Save API settings
-  localStorage.setItem('api-settings', JSON.stringify(apiSettings.value));
-  
+  localStorage.setItem("api-settings", JSON.stringify(apiSettings.value));
+
   // Emit selected provider/model and settings
-  emit('save', {
+  emit("save", {
     selection: {
       provider: selectedProvider.value.id,
-      model: selectedModel.value.id
+      model: selectedModel.value.id,
     },
-    settings: apiSettings.value
+    settings: apiSettings.value,
   });
-  
+
   close();
 };
 
 const close = () => {
-  emit('close');
+  emit("close");
 };
 </script>
+
+<style lang="scss" scoped>
+.api-box {
+  .item {
+    padding: 30px 0;
+    display: flex;
+    align-items: center;
+  }
+  .icon {
+    height: 30px;
+    width: 5px;
+    background: green;
+    border-radius: 5px;
+  }
+}
+.add-model {
+  margin-top: 20px;
+}
+.editor {
+  display: flex;
+  align-items: center;
+}
+</style>
