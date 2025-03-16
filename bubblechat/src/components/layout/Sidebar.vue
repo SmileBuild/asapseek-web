@@ -25,6 +25,7 @@
       :current-model="currentAPI.model"
       @close="isAPISelectorOpen = false"
       @save="handleAPIUpdate"
+       :language="language"
     />
 
     <!-- New Chat Button -->
@@ -82,6 +83,7 @@
               <component
                 :is="session.isPinned ? StarIconSolid : StarIcon"
                 class="h-4 w-4 text-warning"
+                style="color: #fcb700"
                 v-if="session.isPinned"
               />
               {{ session.title || t("common.newChat") }}
@@ -121,7 +123,7 @@
               <component
                 :is="session.isPinned ? StarIconSolid : StarIcon"
                 class="h-4 w-4"
-                style="margin-right: 5px"
+                style="margin-right: 5px; color: #fcb700"
                 :class="{ 'text-warning': session.isPinned }"
               />
               {{ session.isPinned ? t("common.unpin") : t("common.pin") }}
