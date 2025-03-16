@@ -535,7 +535,7 @@ const messageTypes = {
     name: "system",
     avatar: "/avatars/assistant.svg",
     class: "bg-red-500/20 text-red-500 dark:text-red-300",
-    align: "justify-center",
+    align: "justify-start",
   },
 };
 
