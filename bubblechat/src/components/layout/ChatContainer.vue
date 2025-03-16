@@ -589,7 +589,7 @@ const sendMessage = async () => {
     try {
       newMessage.value = "";
       emit("send-message", message);
-
+      console.log('props.provider===', props.provider)
       // Get API response
       let response;
       if (
