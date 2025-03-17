@@ -156,21 +156,26 @@
                     </div>
                   </div>
                   <div class="editor">
-                    <div @click.stop="editorModel(model)">编辑模型</div>
+                    <div @click.stop="editorModel(model)">
+                      {{ t("apiSelector.editModel") }}
+                    </div>
                     <div
                       @click.stop="deleteModel(model)"
                       style="margin-left: 10px; color: red"
                     >
-                      删除模型
+                      {{ t("apiSelector.deleteModel") }}
                     </div>
                   </div>
                 </div>
-                <div style="padding-top: 20px">自定义模型</div>
+                <div style="padding-top: 20px">
+                  {{ t("apiSelector.volcengineModels") }}
+                </div>
                 <el-button
                   class="add-model"
                   type="primary"
                   @click="addCustomModel"
-                  >添加模型</el-button
+                >
+                  {{ t("apiSelector.addModel") }}</el-button
                 >
               </template>
               <template v-else>
@@ -209,14 +214,14 @@
           @click="close"
           class="px-4 py-2 text-sm rounded text-gray-800 dark:text-gray-200 hover:bg-surface-light dark:hover:bg-surface-light-dark"
         >
-          Cancel
+          {{ t("apiSelector.cancel") }}
         </button>
         <button
           @click="save"
           :disabled="!canSave"
           class="px-4 py-2 text-sm bg-primary hover:bg-primary/90 rounded disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Save
+          {{ t("apiSelector.save") }}
         </button>
       </div>
     </div>
@@ -225,38 +230,42 @@
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       v-model="dialogFormVisible"
-      title="添加模型"
+      :title="t('apiSelector.addModel')"
       width="500"
     >
       <el-form :model="modelForm">
-        <el-form-item label="模型ID">
+        <el-form-item :label="t('apiSelector.modelId')">
           <el-input
             v-model="modelForm.id"
             autocomplete="off"
-            placeholder="请输入火山引擎的模型ID"
+            :placeholder="t('apiSelector.modelIdPlaceholder')"
             :disabled="isModify"
           />
         </el-form-item>
-        <el-form-item label="模型名称">
+        <el-form-item :label="t('apiSelector.modelName')">
           <el-input
             v-model="modelForm.name"
             autocomplete="off"
-            placeholder="请输入模型显示名称"
+            :placeholder="t('apiSelector.modelNamePlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="描述">
+        <el-form-item :label="t('apiSelector.modelDescription')">
           <el-input
             type="textarea"
             v-model="modelForm.description"
             autocomplete="off"
-            placeholder="请输入模型描述"
+            :placeholder="t('apiSelector.modelDescriptionPlaceholder')"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogFormVisible = false">取消</el-button>
-          <el-button type="primary" @click="clickSaveBtn"> 保存 </el-button>
+          <el-button @click="dialogFormVisible = false">{{
+            t("apiSelector.cancel")
+          }}</el-button>
+          <el-button type="primary" @click="clickSaveBtn">
+            {{ t("apiSelector.save") }}
+          </el-button>
         </div>
       </template>
     </el-dialog>
@@ -284,34 +293,32 @@ const editorModel = (model) => {
   dialogFormVisible.value = true;
 };
 const deleteModel = (model) => {
-  ElMessageBox.confirm(
-    `确定要删除模型 "${model.name}" 吗？`,
-    '删除确认',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    }
-  ).then(() => {
-    const index = selectedProvider.value.models.findIndex(
-      (item) => item.id === model.id
-    );
-    if (index !== -1) {
-      selectedProvider.value.models.splice(index, 1);
-      console.log("selectedProvider===", selectedProvider);
-      if (selectedProvider.value.models) {
-        selectedModel.value = selectedProvider.value.models[0];
-      }
-      const currentIndex = providers.findIndex(
-        (p) => p.id === selectedProvider.value.id
+  ElMessageBox.confirm(`${t.value('apiSelector.deleteModelConfirm')}`, {
+    confirmButtonText:  t.value("common.sure"),
+    cancelButtonText: t.value("apiSelector.cancel"),
+    type: "warning",
+  })
+    .then(() => {
+      const index = selectedProvider.value.models.findIndex(
+        (item) => item.id === model.id
       );
-      providers[currentIndex].models = toRaw(selectedProvider.value.models);
-      console.log("providers====", providers);
-      localStorage.setItem("providers", JSON.stringify(providers));
-    }
-  }).catch(() => {
-    // 用户取消删除操作
-  });
+      if (index !== -1) {
+        selectedProvider.value.models.splice(index, 1);
+        console.log("selectedProvider===", selectedProvider);
+        if (selectedProvider.value.models) {
+          selectedModel.value = selectedProvider.value.models[0];
+        }
+        const currentIndex = providers.findIndex(
+          (p) => p.id === selectedProvider.value.id
+        );
+        providers[currentIndex].models = toRaw(selectedProvider.value.models);
+        console.log("providers====", providers);
+        localStorage.setItem("providers", JSON.stringify(providers));
+      }
+    })
+    .catch(() => {
+      // 用户取消删除操作
+    });
 };
 const clickSaveBtn = () => {
   if (!modelForm.value.id) {
