@@ -266,6 +266,7 @@
 <script setup>
 import { ref, computed, onMounted, reactive, toRaw } from "vue";
 import { useTranslations } from "../i18n/translations";
+import { ElMessageBox } from "element-plus";
 
 const isModify = ref(false);
 const dialogFormVisible = ref(false);
@@ -283,22 +284,34 @@ const editorModel = (model) => {
   dialogFormVisible.value = true;
 };
 const deleteModel = (model) => {
-  const index = selectedProvider.value.models.findIndex(
-    (item) => item.id === model.id
-  );
-  if (index !== -1) {
-    selectedProvider.value.models.splice(index, 1);
-    console.log("selectedProvider===", selectedProvider);
-    if (selectedProvider.value.models) {
-      selectedModel.value = selectedProvider.value.models[0];
+  ElMessageBox.confirm(
+    `确定要删除模型 "${model.name}" 吗？`,
+    '删除确认',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
     }
-    const currentIndex = providers.findIndex(
-      (p) => p.id === selectedProvider.value.id
+  ).then(() => {
+    const index = selectedProvider.value.models.findIndex(
+      (item) => item.id === model.id
     );
-    providers[currentIndex].models = toRaw(selectedProvider.value.models);
-    console.log("providers====", providers);
-    localStorage.setItem("providers", JSON.stringify(providers));
-  }
+    if (index !== -1) {
+      selectedProvider.value.models.splice(index, 1);
+      console.log("selectedProvider===", selectedProvider);
+      if (selectedProvider.value.models) {
+        selectedModel.value = selectedProvider.value.models[0];
+      }
+      const currentIndex = providers.findIndex(
+        (p) => p.id === selectedProvider.value.id
+      );
+      providers[currentIndex].models = toRaw(selectedProvider.value.models);
+      console.log("providers====", providers);
+      localStorage.setItem("providers", JSON.stringify(providers));
+    }
+  }).catch(() => {
+    // 用户取消删除操作
+  });
 };
 const clickSaveBtn = () => {
   if (!modelForm.value.id) {
