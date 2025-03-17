@@ -26,6 +26,7 @@ export const translations = {
       delete: "Delete",
       pin: "Pin to top",
       unpin: "Unpin from top",
+      sure: 'Sure'
     },
     settings: {
       commonSettings: "Common Settings",
@@ -109,6 +110,7 @@ export const translations = {
       delete: "删除",
       pin: "置顶对话",
       unpin: "取消置顶",
+      sure: '确定'
     },
     settings: {
       commonSettings: "通用设置",
