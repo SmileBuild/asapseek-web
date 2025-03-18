@@ -12,7 +12,8 @@ export const translations = {
       uploadDocument: 'Upload Document',
       onlineSearch: 'Online Search',
       clearChat: 'Clear Chat',
-      knowledgeBase: 'Knowledge Base'
+      knowledgeBase: 'Knowledge Base',
+      stopButton: 'Stop'
     },
     common: {
       settings: "Settings",
@@ -97,6 +98,7 @@ export const translations = {
       onlineSearch: "在线搜索",
       clearChat: "清空对话",
       knowledgeBase: "知识库",
+      stopButton: "停止"
     },
     common: {
       settings: "设置",
