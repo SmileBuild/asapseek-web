@@ -218,10 +218,10 @@
         />
         <button
           type="submit"
-          :disabled="!newMessage.trim() || isLoading"
+          :disabled="!newMessage.trim() && !isStreaming"
           class="bg-primary hover:bg-primary/90 disabled:bg-gray-600 text-white rounded-lg px-6 py-2"
         >
-          {{ t("chat.sendButton") }}
+          {{ isStreaming ? t("chat.stopButton") : t("chat.sendButton") }}
         </button>
       </form>
     </div>
@@ -377,7 +377,7 @@ const formatTime = (timestamp) => {
 };
 
 // Handle streaming response
-const handleStreamResponse = async (reader) => {
+const handleStreamResponse = async (reader, signal) => {
   const decoder = new TextDecoder();
   let buffer = "";
   let fullContent = "";
@@ -385,6 +385,12 @@ const handleStreamResponse = async (reader) => {
 
   try {
     while (true) {
+      // 检查是否请求已被中止
+      if (signal && signal.aborted) {
+        reader.cancel();
+        throw new DOMException("Aborted", "AbortError");
+      }
+
       const { done, value } = await reader.read();
       if (done) break;
 
@@ -450,6 +456,17 @@ const handleStreamResponse = async (reader) => {
       sender: "assistant",
     };
   } catch (error) {
+    if (error.name === 'AbortError') {
+      // 处理中止请求
+      console.log('流式数据传输被中止');
+      return {
+        content: fullContent,
+        reasoning_content: fullReasoningContent || null,
+        usage: currentUsage.value,
+        sender: "assistant",
+      };
+    }
+    
     console.error("Streaming error:", error);
     if (retryCount.value < maxRetries) {
       retryCount.value++;
@@ -466,6 +483,8 @@ const handleStreamResponse = async (reader) => {
   }
 };
 
+const abortController = ref(null);
+
 // Chat API functionality
 const sendProviderMessage = async (
   content,
@@ -473,6 +492,10 @@ const sendProviderMessage = async (
   settings,
   model
 ) => {
+  // 创建新的AbortController
+  abortController.value = new AbortController();
+  const signal = abortController.value.signal;
+
   const response = await fetch(settings.baseUrl, {
     method: "POST",
     headers: {
@@ -489,6 +512,7 @@ const sendProviderMessage = async (
       ],
       stream: true,
     }),
+    signal: signal, // 添加信号用于中止请求
   });
 
   if (!response.ok) {
@@ -506,10 +530,11 @@ const sendProviderMessage = async (
   retryCount.value = 0;
 
   try {
-    const result = await handleStreamResponse(response.body.getReader());
+    const result = await handleStreamResponse(response.body.getReader(), signal);
     return result;
   } finally {
     isStreaming.value = false;
+    abortController.value = null;
   }
 };
 
@@ -584,6 +609,16 @@ const renderMarkdown = (content) => {
 };
 
 const sendMessage = async () => {
+  // 如果正在流式接收数据，则中止当前请求
+  if (isStreaming.value) {
+    if (abortController.value) {
+      abortController.value.abort();
+      abortController.value = null;
+    }
+    isStreaming.value = false;
+    return;
+  }
+
   const message = newMessage.value.trim();
   if (message && !props.isLoading) {
     try {
@@ -611,11 +646,15 @@ const sendMessage = async () => {
       // Emit response back with timestamp
       emit("send-message", message, response);
     } catch (error) {
-      console.error("API Error:", error);
-      emit("error", {
-        content: error.message,
-        sender: "error",
-      });
+      if (error.name === 'AbortError') {
+        console.log('请求被用户中止');
+      } else {
+        console.error("API Error:", error);
+        emit("error", {
+          content: error.message,
+          sender: "error",
+        });
+      }
     }
   }
 };
