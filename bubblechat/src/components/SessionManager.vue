@@ -1,75 +1,73 @@
 <template>
   <div class="flex min-h-screen bg-background">
-    <Sidebar
+    <Sidebar 
       :sessions="sortedSessions"
       :activeSessionId="activeSessionId"
       :language="language"
+      :provider="currentAPI.provider"
+      :model="currentAPI.model"
       @new-chat="createNewChat"
       @select-session="selectSession"
-      @show-about="$emit('show-about')"
+      @show-about="() => activeView = 'about'"
       @update-session="updateSession"
-      @update-settings="handleSettingsSave"
-      @update-api="handleAPIChange"
+      @update-settings="() => activeView = 'settings'"
+      @update-api="() => activeView = 'apiSelector'"
       @remove-session="removeSession"
       @toggle-pin="togglePin"
-    />
-    <ChatContainer
+    />    
+    <MainContainer
+      :activeView="activeView"
       :messages="currentMessages"
       :language="language"
       :isLoading="isLoading"
       :provider="currentAPI.provider"
       :model="currentAPI.model"
       :settings="apiSettings"
+      :t="t"
       @send-message="handleSendMessage"
       @error="handleError"
+      @clear-chat="clearCurrentChat"
+      @update-settings="handleSettingsSave"
+      @update-api="handleAPIChange"
+      @view-change="activeView = $event"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, inject } from "vue";
-import Sidebar from "./layout/Sidebar.vue";
-import ChatContainer from "./layout/ChatContainer.vue";
+import { ref, computed, onMounted, watch, inject } from 'vue';
+import Sidebar from './layout/Sidebar.vue';
+import MainContainer from './layout/MainContainer.vue';
 
-// API State
+// View and API State
+const activeView = ref('chat');
 const apiSettings = ref({});
 const currentAPI = ref({
-  provider: localStorage.getItem("current-api")
-    ? JSON.parse(localStorage.getItem("current-api")).provider
-    : "deepseek",
-  model: localStorage.getItem("current-api")
-    ? JSON.parse(localStorage.getItem("current-api")).model
-    : "deepseek-chat",
+  provider: 'deepseek',
+  model: 'deepseek-chat'
 });
 
 // State
-const STORAGE_KEY = "bubblechat-sessions";
+const STORAGE_KEY = 'bubblechat-sessions';
 const sessions = ref([]);
-const activeSessionId = ref("1");
+const activeSessionId = ref('1');
 const isLoading = ref(false);
 
 const props = defineProps({
   language: {
     type: String,
-    required: true,
+    required: true
   },
+  t: {
+    type: Function,
+    required: true
+  }
 });
 
-const emit = defineEmits(["show-about", "error"]);
+const emit = defineEmits(['show-about', 'error']);
 
 // Get settings update handler from parent
-const onSettingsUpdate = inject("onSettingsUpdate");
-
-// Storage methods
-const loadSessions = () => {
-  try {
-    const savedSessions = localStorage.getItem(STORAGE_KEY);
-    return savedSessions ? JSON.parse(savedSessions) : [];
-  } catch (error) {
-    console.error("Error loading sessions:", error);
-    return [];
-  }
-};
+const onSettingsUpdate = inject('onSettingsUpdate');
 
 // Computed property for sorted sessions
 const sortedSessions = computed(() => {
@@ -81,60 +79,58 @@ const sortedSessions = computed(() => {
   });
 });
 
-const togglePin = (sessionId) => {
-  const session = sessions.value.find((s) => s.id === sessionId);
-  if (session) {
-    updateSession({
-      id: sessionId,
-      isPinned: !session.isPinned,
-    });
+// Storage methods
+const loadSessions = () => {
+  try {
+    const savedSessions = localStorage.getItem(STORAGE_KEY);
+    return savedSessions ? JSON.parse(savedSessions) : [];
+  } catch (error) {
+    console.error('Error loading sessions:', error);
+    return [];
   }
-  console.log(session, sessionId, sessions.value);
 };
 
 const saveSessions = (newSessions) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newSessions));
   } catch (error) {
-    console.error("Error saving sessions:", error);
+    console.error('Error saving sessions:', error);
   }
 };
 
 const updateStorageSession = (currentSessions, sessionId, updates) => {
   try {
-    const sessionIndex = currentSessions.findIndex((s) => s.id === sessionId);
+    const sessionIndex = currentSessions.findIndex(s => s.id === sessionId);
     if (sessionIndex === -1) return null;
 
     const updatedSessions = [...currentSessions];
     updatedSessions[sessionIndex] = {
       ...updatedSessions[sessionIndex],
-      ...updates,
+      ...updates
     };
 
     saveSessions(updatedSessions);
     return updatedSessions;
   } catch (error) {
-    console.error("Error updating session:", error);
+    console.error('Error updating session:', error);
     return null;
   }
 };
 
 const deleteStorageSession = (currentSessions, sessionId) => {
   try {
-    const updatedSessions = currentSessions.filter(
-      (session) => session.id !== sessionId
-    );
+    const updatedSessions = currentSessions.filter(session => session.id !== sessionId);
     saveSessions(updatedSessions);
     return updatedSessions;
   } catch (error) {
-    console.error("Error deleting session:", error);
+    console.error('Error deleting session:', error);
     return currentSessions;
   }
 };
 
 // Computed
 const currentMessages = computed(() => {
-  const session = sessions.value.find((s) => s.id === activeSessionId.value);
+  const session = sessions.value.find(s => s.id === activeSessionId.value);
   return session ? session.messages : [];
 });
 
@@ -150,7 +146,7 @@ onMounted(() => {
   }
 
   // Load saved API settings
-  const savedApiSettings = localStorage.getItem("api-settings");
+  const savedApiSettings = localStorage.getItem('api-settings');
   if (savedApiSettings) {
     const parsedSettings = JSON.parse(savedApiSettings);
     // Initialize apiSettings with the current provider's settings if they exist
@@ -159,34 +155,42 @@ onMounted(() => {
 });
 
 // Watch for sessions changes
-watch(
-  sessions,
-  (newSessions) => {
-    saveSessions(newSessions);
-  },
-  { deep: true }
-);
+watch(sessions, (newSessions) => {
+  saveSessions(newSessions);
+}, { deep: true });
 
 // Methods
 const createNewChat = () => {
   const newSession = {
     id: Date.now().toString(),
-    title: "New Chat",
+    title: 'New Chat',
     timestamp: new Date(),
     messages: [],
-    isPinned: false,
+    isPinned: false
   };
   sessions.value.unshift(newSession);
   activeSessionId.value = newSession.id;
+  activeView.value = 'chat'; // Switch to chat view when creating new chat
 };
 
 const updateSession = (update) => {
   const updatedSessions = updateStorageSession(sessions.value, update.id, {
-    ...("title" in update ? { title: update.title } : {}),
-    ...("isPinned" in update ? { isPinned: update.isPinned } : {}),
+    ...('title' in update ? { title: update.title } : {}),
+    ...('isPinned' in update ? { isPinned: update.isPinned } : {}),
+    timestamp: new Date()
   });
   if (updatedSessions) {
     sessions.value = updatedSessions;
+  }
+};
+
+const togglePin = (sessionId) => {
+  const session = sessions.value.find(s => s.id === sessionId);
+  if (session) {
+    updateSession({
+      id: sessionId,
+      isPinned: !session.isPinned
+    });
   }
 };
 
@@ -199,14 +203,17 @@ const removeSession = (sessionId) => {
 
 const selectSession = (id) => {
   activeSessionId.value = id;
+  activeView.value = 'chat'; // Switch to chat view when selecting a session
 };
 
 const handleSettingsSave = (settings) => {
   // Handle common settings update
   if (settings.commonSettings && onSettingsUpdate) {
     onSettingsUpdate(settings);
+    // Switch back to chat view after saving common settings
+    activeView.value = 'chat';
   }
-
+  
   // Handle API settings update
   if (settings.apiSettings) {
     apiSettings.value = settings.apiSettings[currentAPI.value.provider] || {};
@@ -216,50 +223,44 @@ const handleSettingsSave = (settings) => {
 const handleAPIChange = (selection) => {
   currentAPI.value = selection;
   // Update the active API settings based on the new provider
-  apiSettings.value = localStorage.getItem("api-settings")
-    ? JSON.parse(localStorage.getItem("api-settings"))[selection.provider] || {}
-    : {};
+  apiSettings.value = localStorage.getItem('api-settings') ? 
+    JSON.parse(localStorage.getItem('api-settings'))[selection.provider] || {} :
+    {};
 };
 
 const addMessage = (sessionId, message) => {
-  const sessionIndex = sessions.value.findIndex((s) => s.id === sessionId);
+  const sessionIndex = sessions.value.findIndex(s => s.id === sessionId);
   if (sessionIndex === -1) return;
 
   const newMessage = {
     id: Date.now().toString(),
     ...message,
-    timestamp: new Date(),
+    timestamp: new Date()
   };
 
   sessions.value[sessionIndex].messages.push(newMessage);
 
   // Update session title if it's the first message
-  if (
-    sessions.value[sessionIndex].messages.length === 1 &&
-    message.sender === "user"
-  ) {
-    const newTitle =
-      message.content.slice(0, 30) + (message.content.length > 30 ? "..." : "");
+  if (sessions.value[sessionIndex].messages.length === 1 && message.sender === 'user') {
+    const newTitle = message.content.slice(0, 30) + (message.content.length > 30 ? '...' : '');
     sessions.value = updateStorageSession(sessions.value, sessionId, {
       title: newTitle,
-      timestamp: new Date(),
+      timestamp: new Date()
     });
   }
 };
 
 const handleSendMessage = (message, response) => {
-  console.log("handlesendmsg:", message);
-  console.log("handlesendmsg:", response);
   if (!activeSessionId.value) return;
 
-  if (!response) {
+  if (message !== null && !response) {
     // Initial user message
     addMessage(activeSessionId.value, {
       content: message,
-      sender: "user",
+      sender: 'user'
     });
     isLoading.value = true;
-  } else {
+  } else if (response) {
     // API response
     addMessage(activeSessionId.value, response);
     isLoading.value = false;
@@ -268,10 +269,16 @@ const handleSendMessage = (message, response) => {
 
 const handleError = (errorMessage) => {
   isLoading.value = false;
-  console.log("errormsg", errorMessage);
   addMessage(activeSessionId.value, {
     content: `Error: ${errorMessage}`,
-    sender: "error",
+    sender: 'error'
   });
+};
+
+const clearCurrentChat = () => {
+  const sessionIndex = sessions.value.findIndex(s => s.id === activeSessionId.value);
+  if (sessionIndex !== -1) {
+    sessions.value[sessionIndex].messages = [];
+  }
 };
 </script>

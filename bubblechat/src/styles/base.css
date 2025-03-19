@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.base.300') theme('colors.base.100');
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: theme('colors.base.100');
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: theme('colors.base.300');
+    border-radius: 3px;
+  }
+
+  .sidebar-item {
+    @apply hover:bg-base-200 transition-colors duration-200;
+  }
+
+  .sidebar-item.active {
+    @apply bg-base-200;
+  }
+
+  .message-user {
+    @apply bg-primary text-primary-content p-3 rounded-lg max-w-[80%];
+  }
+
+  .message-ai {
+    @apply bg-base-200 p-3 rounded-lg max-w-[80%];
+  }
+}
