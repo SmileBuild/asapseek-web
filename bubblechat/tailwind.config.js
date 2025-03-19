@@ -1,34 +1,24 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx,vue}",
+    './index.html', 
+    './src/**/*.{vue,js,ts,jsx,tsx}',
   ],
-  darkMode: 'class',
   theme: {
-    extend: {
-      colors: {
-        primary: '#2563EB',
-        secondary: {
-          DEFAULT: '#64748B',
-          dark: '#334155',
-        },
-        background: {
-          DEFAULT: '#F8FAFC',
-          dark: '#0F172A',
-        },
-        surface: {
-          DEFAULT: '#FFFFFF',
-          dark: '#1E293B',
-        },
-        'surface-light': {
-          DEFAULT: '#F1F5F9',
-          dark: '#475569',
-        }
-      },
-    },
+    extend: {},
   },
   plugins: [
     require('daisyui'),
+    require('tailwind-scrollbar')
   ],
+  daisyui: {
+    themes: ["light", "dark", "coffee","synthwave", "retro", "cyberpunk", "sunset", "business"],
+    darkTheme: 'dark',
+    base: true,
+    styled: true,
+    utils:true,
+    logs:true,
+    rtl: false,
+    prefix: '',    
+  },
 }
