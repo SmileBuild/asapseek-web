@@ -246,10 +246,10 @@
         ></textarea>
         <button
           type="submit"
-          :disabled="!newMessage.trim() || isLoading"
+          :disabled="!newMessage.trim() && !isStreaming"
           class="btn btn-primary"
         >
-          {{ t("chat.sendButton") }}
+          {{ isStreaming ? t("chat.stopButton") : t("chat.sendButton") }}
         </button>
       </form>
     </div>
@@ -329,6 +329,7 @@ const streamingReasoningContent = ref("");
 const isStreaming = ref(false);
 const currentUsage = ref(null);
 const isLoading = ref(false);
+const abortController = ref(null);
 
 const props = defineProps({
   messages: {
@@ -371,43 +372,49 @@ const messageTypes = {
   error: {
     name: "system",
     class: "bg-error/20 text-error",
-    align: "justify-center",
+    align: "justify-start",
   },
 };
 
 // Export chat to markdown file
 const exportChat = async () => {
-  try {
-    const timestamp = dayjs().valueOf();
-    const fileName = `chat-export-${timestamp}.md`;
-
-    // Clean messages array before exporting
-    const cleanedMessages = props.messages.map(cleanMessageForIPC);
-
-    // const result = await window.electron.exportChat(cleanedMessages, fileName);
-
-    if (result.success) {
-      showExportSuccessAlert.value = true;
-      setTimeout(() => {
-        showExportSuccessAlert.value = false;
-      }, 1000);
-    } else {
-      exportError.value = result.error;
-      showExportErrorAlert.value = true;
-      setTimeout(() => {
-        showExportErrorAlert.value = false;
-      }, 1000);
-    }
-  } catch (error) {
-    console.error("Export error:", error);
-    exportError.value = error.message;
-    showExportErrorAlert.value = true;
-    setTimeout(() => {
-      showExportErrorAlert.value = false;
-    }, 1000);
-  }
+  const cleanedMessages = props.messages.map(cleanMessageForIPC);
+  const html = marked(messagesToMarkDown(cleanedMessages));
+  const blob = new Blob([html], { type: "text/html;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "exported.html";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };
 
+const messagesToMarkDown = (messages) => {
+  return messages
+    .map((msg) => {
+      const timestamp = new Date(msg.timestamp).toLocaleString();
+      const sender = msg.sender === "user" ? "You" : "Assistant";
+
+      // Handle base content
+      let content = msg.content;
+
+      // For assistant messages, we already have markdown so keep it as is
+      // For user messages, we should escape any markdown characters
+      if (msg.sender === "user") {
+        content = content.replace(/([*_`#\[\]])/g, "\\$1");
+      }
+
+      // Build the message block
+      let markdown = `### ${sender} - ${timestamp}\n\n${content}\n\n`;
+
+      // Add usage information for assistant messages if available
+      if (msg.usage) {
+        markdown += `\n_Tokens: ${msg.usage.total_tokens} (${msg.usage.prompt_tokens} prompt + ${msg.usage.completion_tokens} completion)_\n\n`;
+      }
+      return markdown;
+    })
+    .join("---\n\n");
+};
 // Setup stream event listeners
 onMounted(() => {
   marked.setOptions({
@@ -687,18 +694,35 @@ const handleStreamResponse = async (response) => {
     applyHighlighting();
     return finalResponse;
   } catch (error) {
-    console.error("Stream handling error:", error);
+    if (error.name === "AbortError") {
+      // 处理中止请求
+      console.log("流式数据传输被中止");
+      const finalResponse = {
+        content: fullContent,
+        reasoning_content: fullReasoningContent || null,
+        usage: currentUsage.value,
+        sender: "assistant",
+        timestamp: new Date().toISOString(),
+      };
+      emit("send-message", null, finalResponse);
+      return finalResponse;
+    }
+
     isLoading.value = false;
     isStreaming.value = false;
-    emit("error", {
-      content: error,
-      sender: "error",
-    });
+    // emit("error", {
+    //   content: error,
+    //   sender: "error",
+    // });
     throw error;
   }
 };
 
 const sendChatMessage = async (message, messageHistory) => {
+  // 创建新的AbortController
+  abortController.value = new AbortController();
+  const signal = abortController.value.signal;
+
   const currentAPI = JSON.parse(
     localStorage.getItem("providers.currentAPI")
   ) || {
@@ -729,6 +753,7 @@ const sendChatMessage = async (message, messageHistory) => {
       ],
       stream: true,
     }),
+    signal: signal, // 添加信号用于中止请求
   });
 
   if (!response.ok) {
