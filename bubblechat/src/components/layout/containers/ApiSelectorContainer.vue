@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto p-6" style="height: 100vh; overflow-y: scroll;">
+  <div class="container mx-auto p-6" style="height: 100vh; overflow-y: scroll">
     <div class="toast toast-center toast-middle z-[1000]"></div>
     <div>
       <div class="mb-6">
@@ -516,7 +516,7 @@ const handleSpeedTest = async () => {
       const model = V3_MODELS[provider.id];
       if (!model) return null; // Skip if no v3 model mapping
 
-      const response = await window.electron.testConnection(
+      const response = await loadConnectionTest(
         {
           apiKey: settings.apiKey,
           baseUrl: settings.baseUrl,
@@ -545,6 +545,46 @@ const handleSpeedTest = async () => {
   speedTesting.value = false;
 };
 
+// 测试连接
+const loadConnectionTest = async (settings, model) => {
+  try {
+    const startTime = Date.now();
+    console.log('settings====', settings)
+    const response = await fetch(settings.baseUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${settings.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          { role: "system", content: "You are a helpful assistant." },
+          { role: "user", content: "Hello!" },
+        ],
+        stream: false,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      data,
+      responseTime: Date.now() - startTime,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      responseTime: null,
+    };
+  }
+};
+
 const handleConnectionTest = async () => {
   if (!selectedProvider.value || !canTestConnection.value) return;
 
@@ -556,7 +596,7 @@ const handleConnectionTest = async () => {
       apiKey: settings.apiKey,
       baseUrl: settings.baseUrl,
     };
-    const response = await window.electron.testConnection(
+    const response = await loadConnectionTest(
       serializedSettings,
       selectedModel.value.id
     );
