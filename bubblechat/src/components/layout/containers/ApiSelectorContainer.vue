@@ -359,8 +359,8 @@ const t = computed(() => {
   return typeof result === "function"
     ? result
     : result && typeof result.t === "function"
-    ? result.t
-    : (key) => key;
+      ? result.t
+      : (key) => key;
 });
 
 const emit = defineEmits(["close", "update-api"]);
@@ -409,7 +409,9 @@ onMounted(() => {
     providers.value = volcengineModels();
 
     if (selectedProvider.value?.id === "volcengine") {
-      // customModels.value = await window.electron.getVolcengineModels();
+      customModels.value =
+        JSON.parse(localStorage.getItem("providers.volcengineModels.models")) ||
+        [];
     }
 
     if (providers.value.length > 0) {
@@ -426,17 +428,20 @@ onMounted(() => {
       }
     });
 
-    // const savedSettings = await window.electron.getProviderSettings();
-    // if (savedSettings) {
-    //   Object.keys(savedSettings).forEach(providerId => {
-    //     if (apiSettings.value[providerId]) {
-    //       apiSettings.value[providerId] = {
-    //         ...apiSettings.value[providerId],
-    //         ...savedSettings[providerId]
-    //       };
-    //     }
-    //   });
-    // }
+    const savedSettings = JSON.parse(
+      localStorage.getItem("providers.settings")
+    );
+    console.log("apiSettings====", savedSettings);
+    if (savedSettings) {
+      Object.keys(savedSettings).forEach((providerId) => {
+        if (apiSettings.value[providerId]) {
+          apiSettings.value[providerId] = {
+            ...apiSettings.value[providerId],
+            ...savedSettings[providerId],
+          };
+        }
+      });
+    }
 
     if (props.currentProvider) {
       const validProvider = providers.value.find(
@@ -475,7 +480,9 @@ const selectProvider = async (provider) => {
   selectedModel.value = provider.models[0];
 
   if (provider.id === "volcengine") {
-    customModels.value = await window.electron.getVolcengineModels();
+    customModels.value =
+      JSON.parse(localStorage.getItem("providers.volcengineModels.models")) ||
+      [];
   }
 };
 
@@ -549,7 +556,7 @@ const handleSpeedTest = async () => {
 const loadConnectionTest = async (settings, model) => {
   try {
     const startTime = Date.now();
-    console.log('settings====', settings)
+    console.log("settings====", settings);
     const response = await fetch(settings.baseUrl, {
       method: "POST",
       headers: {
@@ -600,7 +607,6 @@ const handleConnectionTest = async () => {
       serializedSettings,
       selectedModel.value.id
     );
-
     if (response.success) {
       showToast(
         t
@@ -645,13 +651,36 @@ const closeModelModal = () => {
   modelForm.value = { id: "", name: "", description: "" };
 };
 
+const updateModel = (id, updates) => {
+  const models = JSON.parse(
+    localStorage.getItem("providers.volcengineModels.models")
+  ) || [];
+  const index = models.findIndex((m) => m.id === id);
+  if (index === -1) {
+    throw new Error("Model not found");
+  }
+  models[index] = { ...models[index], ...updates };
+  localStorage.setItem("providers.volcengineModels.models", JSON.stringify(models));
+  return true;
+};
+
+const addVolcengineModel = (model) => {
+  console.log("models====", localStorage);
+  const models = JSON.parse(
+    localStorage.getItem("providers.volcengineModels.models")
+  ) ?? [];
+  console.log("models====", models);
+  if (models.some((m) => m.id === model.id)) {
+    throw new Error("Model ID already exists");
+  }
+  models.push(JSON.parse(model));
+  localStorage.setItem("providers.volcengineModels.models", JSON.stringify(models));
+};
 const saveModel = async () => {
   try {
     if (editingModel.value) {
-      // await window.electron.updateVolcengineModel(
-      //   editingModel.value.id,
-      //   JSON.stringify(modelForm.value)
-      // );
+      console.log('1')
+      updateModel(editingModel.value.id, JSON.stringify(modelForm.value));
       const index = customModels.value.findIndex(
         (m) => m.id === editingModel.value.id
       );
@@ -660,7 +689,7 @@ const saveModel = async () => {
       }
       showToast(t.value("apiSelector.modelSaveSuccess"), "success");
     } else {
-      // await window.electron.addVolcengineModel(JSON.stringify(modelForm.value));
+      addVolcengineModel(JSON.stringify(modelForm.value));
       customModels.value.push({ ...modelForm.value });
       showToast(t.value("apiSelector.modelSaveSuccess"), "success");
     }
@@ -673,11 +702,24 @@ const saveModel = async () => {
   }
 };
 
+const handleDeleteModel = (id) => {
+  const models = JSON.parse(
+    localStorage.getItem("providers.volcengineModels.models", [])
+  );
+  const filtered = models.filter((m) => m.id !== id);
+  if (filtered.length === models.length) {
+    throw new Error("Model not found");
+  }
+  localStorage.setItem(
+    "providers.volcengineModels.models",
+    JSON.stringify(filtered)
+  );
+};
 const deleteModel = async (model) => {
   if (!confirm(t.value("apiSelector.deleteModelConfirm"))) return;
 
   try {
-    // await window.electron.deleteVolcengineModel(model.id);
+    handleDeleteModel(model.id)
     customModels.value = customModels.value.filter((m) => m.id !== model.id);
     showToast(t.value("apiSelector.modelDeleteSuccess"), "success");
   } catch (error) {
@@ -704,9 +746,11 @@ const save = async () => {
         baseUrl: apiSettings.value[providerId].baseUrl,
       };
     });
-
-    // await window.electron.updateProviderSettings(serializedSettings);
-    // await window.electron.updateCurrentAPI(selection);
+    localStorage.setItem(
+      "providers.settings",
+      JSON.stringify(serializedSettings)
+    );
+    localStorage.setItem("providers.currentAPI", JSON.stringify(selection));
 
     emit("update-api", {
       selection,
