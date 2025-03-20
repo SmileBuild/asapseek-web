@@ -1,13 +1,18 @@
 <template>
-  <li class="group w-full hover:bg-base-300"
-      :class="{
-        'bg-base-300': isActive,
-        'bg-base-100/80': session.isPinned
-      }">
+  <li
+    class="group w-full hover:bg-base-300"
+    :class="{
+      'bg-base-300': isActive,
+      'bg-base-100/80': session.isPinned,
+    }"
+  >
     <!-- Session Content -->
-    <div class="w-full flex flex-col gap-1 px-4 py-3 min-h-[3.5rem] cursor-pointer relative" @click="$emit('select')">
+    <div
+      class="w-full flex flex-col gap-1 px-4 py-3 min-h-[3.5rem] cursor-pointer relative"
+      @click="$emit('select')"
+    >
       <div v-if="isEditing" class="w-full" @click.stop>
-        <input 
+        <input
           ref="titleInput"
           v-model="editTitle"
           @blur="saveTitle"
@@ -17,87 +22,118 @@
           :placeholder="t('common.newChat')"
         />
       </div>
-      <div v-else class="w-full text-left text-sm truncate text-base-content font-medium flex gap-2">
-        <component 
-          :is="session.isPinned ? StarIconSolid : StarIcon" 
-          class="h-4 w-4 text-warning" 
+      <div
+        v-else
+        class="w-full text-left text-sm truncate text-base-content font-medium flex gap-2"
+      >
+        <component
+          :is="session.isPinned ? StarIconSolid : StarIcon"
+          class="h-4 w-4 text-warning"
           v-if="session.isPinned"
         />
-        {{ session.title || t('common.newChat') }}
+        {{ session.title || t("common.newChat") }}
       </div>
-      <div class="w-full text-left text-xs text-base-content/60">{{ formattedDate }}</div>
+      <div class="w-full text-left text-xs text-base-content/60">
+        {{ formattedDate }}
+      </div>
     </div>
-    
-    <!-- Action Icons -->
-    <div class="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-base-300/50 rounded-lg px-1 z-10" @click.stop>
-      <button 
-        @click.stop="$emit('toggle-pin')"
-        class="btn btn-ghost btn-xs"
-        :title="session.isPinned ? t('common.unpin') : t('common.pin')"
-      >
-        <component 
-          :is="session.isPinned ? StarIconSolid : StarIcon"
-          class="h-4 w-4" 
-          :class="{ 'text-warning': session.isPinned }"
-        />
-      </button>
-      <button 
-        @click.stop="startEditing"
-        class="btn btn-ghost btn-xs"
-        :title="t('common.rename')"
-      >
-        <PencilIcon class="h-4 w-4" />
-      </button>
-      <button 
-        @click.stop="$emit('remove')"
-        class="btn btn-ghost btn-xs text-error"
-        :title="t('common.delete')"
-      >
-        <TrashIcon class="h-4 w-4" />
-      </button>
+
+    <!-- 替换原来的 Action Icons 部分 -->
+    <div
+      v-if="!isEditing"
+      class="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-10"
+      @click.stop
+      style="padding: 0"
+    >
+      <div class="dropdown dropdown-end h-full">
+        <label
+          tabindex="0"
+          class="btn btn-ghost h-full px-2 flex items-center justify-center min-h-0 hover:bg-base-100"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
+            />
+          </svg>
+        </label>
+        <ul
+          tabindex="0"
+          class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
+        >
+          <li>
+            <a @click.stop="$emit('toggle-pin')">
+              <component
+                :is="session.isPinned ? StarIconSolid : StarIcon"
+                class="h-4 w-4"
+                :class="{ 'text-warning': session.isPinned }"
+              />
+              {{ session.isPinned ? t("common.unpin") : t("common.pin") }}
+            </a>
+          </li>
+          <li>
+            <a @click.stop="startEditing">
+              <PencilIcon class="h-4 w-4" />
+              {{ t("common.rename") }}
+            </a>
+          </li>
+          <li>
+            <a @click.stop="$emit('remove')" class="text-error">
+              <TrashIcon class="h-4 w-4" />
+              {{ t("common.delete") }}
+            </a>
+          </li>
+        </ul>
+      </div>
     </div>
   </li>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { formatDate } from '../../../utils/dateFormatter';
-import {
-  PencilIcon,
-  TrashIcon,
-  StarIcon
-} from '@heroicons/vue/24/outline';
-import { StarIcon as StarIconSolid } from '@heroicons/vue/24/solid';
+import { ref, computed } from "vue";
+import { formatDate } from "../../../utils/dateFormatter";
+import { PencilIcon, TrashIcon, StarIcon } from "@heroicons/vue/24/outline";
+import { StarIcon as StarIconSolid } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
   session: {
     type: Object,
-    required: true
+    required: true,
   },
   isActive: {
     type: Boolean,
-    default: false
+    default: false,
   },
   language: {
     type: String,
-    required: true
+    required: true,
   },
   t: {
     type: Function,
-    required: true
-  }
+    required: true,
+  },
 });
 
-const emit = defineEmits(['select', 'update', 'remove', 'toggle-pin']);
+const emit = defineEmits(["select", "update", "remove", "toggle-pin"]);
 
 const isEditing = ref(false);
-const editTitle = ref('');
+const editTitle = ref("");
 const titleInput = ref(null);
 
-const formattedDate = computed(() => formatDate(props.session.timestamp, props.language));
+const formattedDate = computed(() =>
+  formatDate(props.session.timestamp, props.language)
+);
 
 const startEditing = () => {
-  editTitle.value = props.session.title || '';
+  editTitle.value = props.session.title || "";
   isEditing.value = true;
   // Focus the input after the next DOM update
   setTimeout(() => {
@@ -113,14 +149,14 @@ const saveTitle = () => {
   }
 
   if (newTitle !== props.session.title) {
-    emit('update', newTitle);
+    emit("update", newTitle);
   }
-  
+
   cancelEditing();
 };
 
 const cancelEditing = () => {
   isEditing.value = false;
-  editTitle.value = '';
+  editTitle.value = "";
 };
 </script>

@@ -397,8 +397,8 @@ const volcengineModels = () => {
   // Merge custom Volcengine models with default models
   const volcengineProvider = configs.find((p) => p.id === "volcengine");
   if (volcengineProvider) {
-    // const customModels = store.get('providers.volcengineModels.models', []);
-    volcengineProvider.models = [...volcengineProvider.models];
+    const customModels = JSON.parse(localStorage.getItem('providers.volcengineModels.models', []));
+    volcengineProvider.models = [...volcengineProvider.models, ...customModels];
   }
 
   return configs;
