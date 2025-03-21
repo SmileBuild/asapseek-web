@@ -359,8 +359,8 @@ const t = computed(() => {
   return typeof result === "function"
     ? result
     : result && typeof result.t === "function"
-      ? result.t
-      : (key) => key;
+    ? result.t
+    : (key) => key;
 });
 
 const emit = defineEmits(["close", "update-api"]);
@@ -397,7 +397,9 @@ const volcengineModels = () => {
   // Merge custom Volcengine models with default models
   const volcengineProvider = configs.find((p) => p.id === "volcengine");
   if (volcengineProvider) {
-    const customModels = JSON.parse(localStorage.getItem('providers.volcengineModels.models', []));
+    const customModels = JSON.parse(
+      localStorage.getItem("providers.volcengineModels.models") || "[]"
+    );
     volcengineProvider.models = [...volcengineProvider.models, ...customModels];
   }
 
@@ -407,6 +409,7 @@ const volcengineModels = () => {
 onMounted(() => {
   try {
     providers.value = volcengineModels();
+    console.log("providers====", providers.value);
 
     if (selectedProvider.value?.id === "volcengine") {
       customModels.value =
@@ -652,34 +655,38 @@ const closeModelModal = () => {
 };
 
 const updateModel = (id, updates) => {
-  const models = JSON.parse(
-    localStorage.getItem("providers.volcengineModels.models")
-  ) || [];
+  const models =
+    JSON.parse(localStorage.getItem("providers.volcengineModels.models")) || [];
   const index = models.findIndex((m) => m.id === id);
   if (index === -1) {
     throw new Error("Model not found");
   }
   models[index] = { ...models[index], ...updates };
-  localStorage.setItem("providers.volcengineModels.models", JSON.stringify(models));
+  localStorage.setItem(
+    "providers.volcengineModels.models",
+    JSON.stringify(models)
+  );
   return true;
 };
 
 const addVolcengineModel = (model) => {
   console.log("models====", localStorage);
-  const models = JSON.parse(
-    localStorage.getItem("providers.volcengineModels.models")
-  ) ?? [];
+  const models =
+    JSON.parse(localStorage.getItem("providers.volcengineModels.models")) ?? [];
   console.log("models====", models);
   if (models.some((m) => m.id === model.id)) {
     throw new Error("Model ID already exists");
   }
   models.push(JSON.parse(model));
-  localStorage.setItem("providers.volcengineModels.models", JSON.stringify(models));
+  localStorage.setItem(
+    "providers.volcengineModels.models",
+    JSON.stringify(models)
+  );
 };
 const saveModel = async () => {
   try {
     if (editingModel.value) {
-      console.log('1')
+      console.log("1");
       updateModel(editingModel.value.id, JSON.stringify(modelForm.value));
       const index = customModels.value.findIndex(
         (m) => m.id === editingModel.value.id
@@ -719,7 +726,7 @@ const deleteModel = async (model) => {
   if (!confirm(t.value("apiSelector.deleteModelConfirm"))) return;
 
   try {
-    handleDeleteModel(model.id)
+    handleDeleteModel(model.id);
     customModels.value = customModels.value.filter((m) => m.id !== model.id);
     showToast(t.value("apiSelector.modelDeleteSuccess"), "success");
   } catch (error) {
