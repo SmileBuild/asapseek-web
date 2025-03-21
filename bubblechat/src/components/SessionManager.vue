@@ -168,6 +168,13 @@ onMounted(() => {
     // Initialize apiSettings with the current provider's settings if they exist
     apiSettings.value = parsedSettings[currentAPI.value.provider] || {};
   }
+
+  // 获取最新的currentAPI
+  const selection = JSON.parse(localStorage.getItem("providers.currentAPI"));
+  if (selection) {
+    currentAPI.value = selection;
+  }
+  console.log("selection:", selection);
 });
 
 // Watch for sessions changes

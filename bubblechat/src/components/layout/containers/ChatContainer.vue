@@ -570,7 +570,15 @@ const sendMessage = async () => {
       // Note: Response handling is done through stream events in the event listeners
     } catch (error) {
       console.error("API Error:", error);
+      const finalResponse = {
+        content: error,
+        sender: "assistant",
+        timestamp: new Date().toISOString(),
+      };
+      emit("send-message", null, finalResponse);
       isLoading.value = false;
+      isStreaming.value = false;
+      throw error;
       // Let the stream:error event handler deal with error display
     }
   }
@@ -581,6 +589,16 @@ const loadSendMessage = async (message, messageHistory) => {
     const stream = await sendChatMessage(message, messageHistory);
     return handleStreamResponse(stream);
   } catch (error) {
+    const finalResponse = {
+      content: error.message,
+      reasoning_content:  null,
+      usage: null,
+      sender: "assistant",
+      timestamp: new Date().toISOString(),
+    };
+    isLoading.value = false;
+    isStreaming.value = false;
+    emit("send-message", null, finalResponse);
     // event.sender.send("stream:error", error.message);
     throw error;
   }
