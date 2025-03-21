@@ -151,8 +151,8 @@ const currentMessages = computed(() => {
 });
 
 // Load sessions and API settings on mount
-onMounted(() => {
-  // Load saved sessions
+
+const loadCreateChat = () => {
   const savedSessions = loadSessions();
   if (savedSessions.length > 0) {
     sessions.value = savedSessions;
@@ -160,6 +160,11 @@ onMounted(() => {
   } else {
     createNewChat();
   }
+}
+
+onMounted(() => {
+  // Load saved sessions
+  loadCreateChat()
 
   // Load saved API settings
   const savedApiSettings = localStorage.getItem("api-settings");
@@ -283,8 +288,13 @@ const addMessage = (sessionId, message) => {
 };
 
 const handleSendMessage = (message, response) => {
+  const savedSessions = loadSessions();
+  if (savedSessions.length > 0) {
+    
+  } else {
+    createNewChat();
+  }
   if (!activeSessionId.value) return;
-
   if (message !== null && !response) {
     // Initial user message
     addMessage(activeSessionId.value, {

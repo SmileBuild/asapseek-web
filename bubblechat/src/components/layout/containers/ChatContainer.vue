@@ -540,6 +540,7 @@ const cleanMessageForIPC = (message) => {
 
 // Send message through IPC
 const sendMessage = async () => {
+
   // 如果正在流式接收数据，则中止当前请求
   if (isStreaming.value) {
     if (abortController.value) {
@@ -553,9 +554,9 @@ const sendMessage = async () => {
   if (message && !isLoading.value) {
     try {
       newMessage.value = "";
-      emit("send-message", message);
+      await emit("send-message", message);
       isLoading.value = true;
-
+      
       // Clean messages array before sending through IPC
       const cleanedMessages = props.messages.map(cleanMessageForIPC);
       console.log("cleanedMessages", cleanedMessages);
