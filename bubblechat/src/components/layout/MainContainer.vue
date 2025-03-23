@@ -2,14 +2,15 @@
   <div class="flex-1">
     <ChatContainer 
       v-if="activeView === 'chat'"
+       :activeSessionId="activeSessionId"
       :messages="messages"
       :language="language"
       :isLoading="isLoading"
       :provider="provider"
       :model="model"
       :settings="settings"
-      @send-message="(message, response) => $emit('send-message', message, response)"
-      @error="$emit('error', $event)"
+      @send-message="(message, response, activeSessionId) => $emit('send-message', message, response, activeSessionId)"
+      @error="$emit('error', $event, activeSessionId)"
       @clear-chat="$emit('clear-chat')"
     />
     <SettingsContainer
@@ -42,6 +43,10 @@ import ApiSelectorContainer from './containers/ApiSelectorContainer.vue';
 import AboutContainer from './containers/AboutContainer.vue';
 
 defineProps({
+  activeSessionId: {
+    type: String,
+    required: true
+  },
   activeView: {
     type: String,
     required: true
