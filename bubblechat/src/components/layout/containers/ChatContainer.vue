@@ -340,6 +340,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  activeSessionId: {
+    type: String,
+    required: true,
+  },
 });
 
 const t = computed(() => {
@@ -540,6 +544,7 @@ const cleanMessageForIPC = (message) => {
 
 // Send message through IPC
 const sendMessage = async () => {
+
   // 如果正在流式接收数据，则中止当前请求
   if (isStreaming.value) {
     if (abortController.value) {
@@ -553,9 +558,9 @@ const sendMessage = async () => {
   if (message && !isLoading.value) {
     try {
       newMessage.value = "";
-      emit("send-message", message);
+      await emit("send-message", message);
       isLoading.value = true;
-
+      
       // Clean messages array before sending through IPC
       const cleanedMessages = props.messages.map(cleanMessageForIPC);
       console.log("cleanedMessages", cleanedMessages);
@@ -575,7 +580,7 @@ const sendMessage = async () => {
         sender: "assistant",
         timestamp: new Date().toISOString(),
       };
-      emit("send-message", null, finalResponse);
+      emit("send-message", null, finalResponse, props.activeSessionId);
       isLoading.value = false;
       isStreaming.value = false;
       throw error;
@@ -598,7 +603,7 @@ const loadSendMessage = async (message, messageHistory) => {
     };
     isLoading.value = false;
     isStreaming.value = false;
-    emit("send-message", null, finalResponse);
+    emit("send-message", null, finalResponse, props.activeSessionId);
     // event.sender.send("stream:error", error.message);
     throw error;
   }
@@ -708,7 +713,7 @@ const handleStreamResponse = async (response) => {
     };
     isStreaming.value = false;
     console.log("finalResponse", finalResponse);
-    emit("send-message", null, finalResponse);
+    emit("send-message", null, finalResponse, props.activeSessionId);
     applyHighlighting();
     return finalResponse;
   } catch (error) {
@@ -722,7 +727,7 @@ const handleStreamResponse = async (response) => {
         sender: "assistant",
         timestamp: new Date().toISOString(),
       };
-      emit("send-message", null, finalResponse);
+      emit("send-message", null, finalResponse, props.activeSessionId);
       return finalResponse;
     }
 

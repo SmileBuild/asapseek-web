@@ -15,27 +15,34 @@
       @remove-session="removeSession"
       @toggle-pin="togglePin"
     />
-    <MainContainer
-      :activeView="activeView"
-      :messages="currentMessages"
-      :language="language"
-      :isLoading="isLoading"
-      :provider="currentAPI.provider"
-      :model="currentAPI.model"
-      :settings="apiSettings"
-      :t="t"
-      @send-message="handleSendMessage"
-      @error="handleError"
-      @clear-chat="clearCurrentChat"
-      @update-settings="handleSettingsSave"
-      @update-api="handleAPIChange"
-      @view-change="activeView = $event"
-    />
+
+       <div class="flex-1 relative">
+      <template v-for="session in sortedSessions" :key="session.id">
+        <MainContainer
+          v-show="session.id === activeSessionId"
+          :activeView="activeView"
+          :messages="session.messages"
+          :language="language"
+          :isLoading="isLoading"
+          :provider="currentAPI.provider"
+          :model="currentAPI.model"
+          :settings="apiSettings"
+          :activeSessionId="session.id"
+          :t="t"
+          @send-message="(message, response) => handleSendMessage(message, response, session.id)"
+          @error="handleError"
+          @clear-chat="clearCurrentChat"
+          @update-settings="handleSettingsSave"
+          @update-api="handleAPIChange"
+          @view-change="activeView = $event"
+        />
+      </template>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, inject } from "vue";
+import { ref, computed, onMounted, watch, inject, markRaw } from "vue";
 import Sidebar from "./layout/Sidebar.vue";
 import MainContainer from "./layout/MainContainer.vue";
 
@@ -151,8 +158,8 @@ const currentMessages = computed(() => {
 });
 
 // Load sessions and API settings on mount
-onMounted(() => {
-  // Load saved sessions
+
+const loadCreateChat = () => {
   const savedSessions = loadSessions();
   if (savedSessions.length > 0) {
     sessions.value = savedSessions;
@@ -160,6 +167,11 @@ onMounted(() => {
   } else {
     createNewChat();
   }
+}
+
+onMounted(() => {
+  // Load saved sessions
+  loadCreateChat()
 
   // Load saved API settings
   const savedApiSettings = localStorage.getItem("api-settings");
@@ -226,6 +238,11 @@ const removeSession = (sessionId) => {
   if (activeSessionId.value === sessionId) {
     activeSessionId.value = sessions.value[0]?.id;
   }
+  const savedSessions = loadSessions();
+  if (savedSessions.length > 0) {
+  } else {
+    createNewChat();
+  }
 };
 
 const selectSession = (id) => {
@@ -282,26 +299,32 @@ const addMessage = (sessionId, message) => {
   }
 };
 
-const handleSendMessage = (message, response) => {
+const handleSendMessage = (message, response, chatId) => {
+  console.log("handleSendMessage===:", chatId, activeSessionId.value);
+  const savedSessions = loadSessions();
+  if (savedSessions.length > 0) {
+    
+  } else {
+    createNewChat();
+  }
   if (!activeSessionId.value) return;
-
   if (message !== null && !response) {
     // Initial user message
-    addMessage(activeSessionId.value, {
+    addMessage(chatId, {
       content: message,
       sender: "user",
     });
     isLoading.value = true;
   } else if (response) {
     // API response
-    addMessage(activeSessionId.value, response);
+    addMessage(chatId, response);
     isLoading.value = false;
   }
 };
 
-const handleError = (errorMessage) => {
+const handleError = (errorMessage, chatId) => {
   isLoading.value = false;
-  addMessage(activeSessionId.value, {
+  addMessage(chatId, {
     content: `Error: ${errorMessage}`,
     sender: "error",
   });
