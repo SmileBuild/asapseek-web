@@ -4,6 +4,7 @@ import tailwindcss from 'tailwindcss'
 
 export default defineConfig({
   plugins: [vue()],
+  base:'/asapseek-web/',
   css: {
     postcss: {
       plugins: [
