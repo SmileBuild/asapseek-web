@@ -1,49 +1,21 @@
-# asapseek-web
+# asapseek
+asapseek is a llm desktop client project
 
-A modern web application that provides a unified chat interface for various AI APIs, built with Vue.js and Tailwind CSS.
+# ASAP网页端产品路径规划
 
-## Features
-- Multi-API support for different AI providers
-- Markdown rendering with code highlighting
-- Clean and responsive chat interface
-- Session management
-- Internationalization support
-- Settings customization
-- Modern avatar-based chat UI
 
-## Tech Stack
-- Vue.js 3
-- Tailwind CSS
-- Vite
-- Features:
-  - marked (Markdown parsing)
-  - highlight.js (Code syntax highlighting)
-  - DOMPurify (Security)
-  - dayjs (Date formatting)
+## 0.1.1版本(NOW)
+ - [ ] 增加更新功能和小红点
+ - [ ] 增加教程链接
+ - [ ] 重置图标设计
 
-## Installation
-```bash
-# Clone the repository
-git clone [repository-url]
-cd bubblechat
 
-# Install dependencies
-npm install
-```
+## 0.1.0版本(finish)
+  - [x] 对话导出功能（Markdown）
+  - [x] 对话置顶、重命名、删除功能
+  - [x] 对话终止
+  - [x] 空白页面指引
+  - [x] 输入框可回车
+  - [x] 代码块语法高亮（支持20+编程语言）
+  - [x] 多API供应商切换
 
-## Development
-```bash
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-## Usage
-1. Configure your API settings
-2. Create a new chat session
-3. Start chatting with your preferred AI model
