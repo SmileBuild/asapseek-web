@@ -1,9 +1,12 @@
 // 品牌与视觉 token，集中管理便于后续白标。
 export const BRAND = {
-  name: 'DeepSeek 生产力工作台',
+  name: 'AsapSeek Deepseek 的生产力工作台',
+  // Hero 双行视觉处理：第一行公司品牌、第二行产品定位
+  heroLine1: 'AsapSeek',
+  heroLine2: 'Deepseek 的生产力工作台',
   tagline: '12 个场景，看见 DeepSeek 在做事',
   subtitle: '为自媒体、电商与私募基金打造的现场演示装置',
-  footer: '© DeepSeek 生产力工作台 · 演示用 demo',
+  footer: '© AsapSeek · Deepseek 生产力工作台 · 演示用 demo',
 };
 
 export const INDUSTRIES = [

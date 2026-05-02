@@ -8,7 +8,7 @@
     <nav class="sticky top-0 z-30 backdrop-blur bg-paper/80 border-b border-paper-deep">
       <div class="canvas flex items-center gap-6 py-3 text-sm">
         <span class="font-serif font-bold text-ink-strong mr-auto">
-          DeepSeek 生产力工作台
+          {{ BRAND.name }}
         </span>
         <a
           v-for="industry in INDUSTRIES"

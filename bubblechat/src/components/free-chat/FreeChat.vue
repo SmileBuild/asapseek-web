@@ -127,7 +127,7 @@ const send = async () => {
   try {
     const result = await stream.run({
       messages: [
-        { role: 'system', content: '你是 DeepSeek 生产力工作台中的对话助手，回答简洁、专业、有用。' },
+        { role: 'system', content: '你是 AsapSeek · Deepseek 生产力工作台中的对话助手，回答简洁、专业、有用。' },
         ...conversation,
       ],
       modelId: modelId.value,

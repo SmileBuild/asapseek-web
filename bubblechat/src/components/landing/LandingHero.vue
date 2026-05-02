@@ -7,8 +7,8 @@
       </div>
 
       <h1 class="mt-12 font-serif font-black leading-[1.05] text-ink-strong text-[56px] sm:text-[72px] lg:text-[96px]">
-        DeepSeek<br />
-        <span class="italic font-bold text-ink">生产力工作台</span>
+        {{ BRAND.heroLine1 }}<br />
+        <span class="italic font-bold text-ink">{{ BRAND.heroLine2 }}</span>
       </h1>
 
       <p class="mt-8 max-w-2xl text-lg sm:text-xl text-ink-soft leading-relaxed">
