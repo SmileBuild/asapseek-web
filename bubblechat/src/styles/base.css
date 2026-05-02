@@ -1,40 +1,60 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* 杂志展厅风基础 token 与排版重置 */
+:root {
+  --paper: #faf8f2;
+  --paper-soft: #f2eee3;
+  --paper-deep: #e9e3d2;
+  --ink: #16140f;
+  --ink-strong: #0b0a07;
+  --ink-soft: #3d3a33;
+  --ink-mute: #7a766c;
+  --ink-faint: #a8a498;
+  --accent: #4d6bfe;
+  --accent-violet: #8b5cf6;
+  --grain-opacity: 0.04;
+}
 
-@layer components {
-  .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: theme('colors.base.300') theme('colors.base.100');
-  }
+html,
+body,
+#app {
+  height: 100%;
+}
 
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
+body {
+  margin: 0;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: Inter, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: theme('colors.base.100');
-  }
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
 
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: theme('colors.base.300');
-    border-radius: 3px;
-  }
+/* 极轻的纸纹 grain，提升杂志感 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(
+      circle at 20% 30%,
+      rgba(0, 0, 0, var(--grain-opacity)) 0,
+      transparent 1px
+    ),
+    radial-gradient(
+      circle at 80% 60%,
+      rgba(0, 0, 0, var(--grain-opacity)) 0,
+      transparent 1px
+    );
+  background-size: 5px 5px, 7px 7px;
+  mix-blend-mode: multiply;
+}
 
-  .sidebar-item {
-    @apply hover:bg-base-200 transition-colors duration-200;
-  }
-
-  .sidebar-item.active {
-    @apply bg-base-200;
-  }
-
-  .message-user {
-    @apply bg-primary text-primary-content p-3 rounded-lg max-w-[80%];
-  }
-
-  .message-ai {
-    @apply bg-base-200 p-3 rounded-lg max-w-[80%];
-  }
+#app {
+  position: relative;
+  z-index: 1;
 }

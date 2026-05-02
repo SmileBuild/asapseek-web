@@ -1,0 +1,13 @@
+{
+  "id": "self-media-xiaohongshu-title",
+  "industry": "self-media",
+  "title": "小红书爆款标题工坊",
+  "subtitle": "把一个普通主题，淬炼成 8 个能打开率的标题",
+  "modelTier": "flash",
+  "showReasoning": false,
+  "outputRenderer": "list",
+  "tags": ["标题", "种草", "流量"],
+  "demoInput": "主题：周末在家做的 10 分钟低卡早餐\n受众：25–35 岁城市白领女性，关心身材但没耐心\n关键卖点：极简 / 低卡 / 上班前来得及",
+  "systemPrompt": "你是擅长小红书内容的资深爆款编辑。给定一个主题、受众与关键卖点，请输出 8 个候选标题，覆盖以下钩子之一：数字钩 / 反差钩 / 痛点钩 / 身份钩 / 悬念钩 / 共鸣钩 / 干货钩 / 故事钩。\n\n严格按以下 Markdown 列表格式输出，每条占一行：\n\n1. 「标题文本」 — 钩子类型 · 一句话点评\n2. ...\n\n标题中可以使用 emoji，但每条不超过 22 个字。",
+  "userPromptTemplate": "{{input}}"
+}
